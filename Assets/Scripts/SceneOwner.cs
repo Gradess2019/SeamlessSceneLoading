@@ -10,6 +10,7 @@ namespace SceneLoading
     enum SceneState
     {
         Unloaded,
+        InProgress,
         Loaded,
         Active
     }
@@ -51,25 +52,43 @@ namespace SceneLoading
             else
             {
                 if (state != SceneState.Unloaded) { return; }
-                SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
-                state = SceneState.Loaded;
+                state = SceneState.InProgress;
+                StartCoroutine(LoadScene());
             }
+        }
+
+        private IEnumerator LoadScene()
+        {
+            AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+            
+            while (!operation.isDone)
+            {
+                yield return null;
+            }
+
+            state = SceneState.Loaded;
         }
 
         public void Unload()
         {
             if (state != SceneState.Loaded) { return; }
-
+            
+            state = SceneState.InProgress;
             StartCoroutine(UnloadScene());
             Resources.UnloadUnusedAssets();
-        
-            state = SceneState.Unloaded;
         }
 
         private IEnumerator UnloadScene()
         {
             AsyncOperation operation = SceneManager.UnloadSceneAsync(sceneName);
-            yield return operation;
+            // yield return operation;
+
+            while (!operation.isDone)
+            {
+                yield return null;
+            }
+
+            state = SceneState.Unloaded;
         }
 
         private void OnTriggerEnter(Collider other)
