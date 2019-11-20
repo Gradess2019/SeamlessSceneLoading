@@ -7,6 +7,13 @@ using UnityEngine.SceneManagement;
 
 namespace SceneLoading
 {
+    enum SceneState
+    {
+        Unloaded,
+        Loaded,
+        Active
+    }
+
     public class SceneOwner : MonoBehaviour
     {
         [SerializeField]
@@ -18,16 +25,20 @@ namespace SceneLoading
         [SerializeField]
         private bool isFirst;
 
+        private SceneState state;
+
         private static SceneOwner currentScene;
 
         public static SceneOwner CurrentScene { get => currentScene; set => currentScene = value; }
         public bool IsFirst { get => isFirst; set => isFirst = value; }
+        internal SceneState State { get => state; set => state = value; }
 
         private void Start()
         {
             if (!isFirst) { return; }
 
             currentScene = this;
+            state = SceneState.Active;
         }
 
         public void Load()
@@ -39,16 +50,20 @@ namespace SceneLoading
             }
             else
             {
-                if (SceneManager.GetSceneByName(sceneName).isLoaded) { return; }
+                if (state != SceneState.Unloaded) { return; }
                 SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+                state = SceneState.Loaded;
             }
         }
 
         public void Unload()
         {
-            if (!SceneManager.GetSceneByName(sceneName).isLoaded) { return; }
+            if (state != SceneState.Loaded) { return; }
+
             StartCoroutine(UnloadScene());
             Resources.UnloadUnusedAssets();
+        
+            state = SceneState.Unloaded;
         }
 
         private IEnumerator UnloadScene()
@@ -59,9 +74,10 @@ namespace SceneLoading
 
         private void OnTriggerEnter(Collider other)
         {
-            Debug.Log("Enter");
+            Load();
             LoadNeighbors();
             currentScene = this;
+            state = SceneState.Active;
         }
 
         public void LoadNeighbors()
@@ -74,11 +90,15 @@ namespace SceneLoading
 
         private void OnTriggerExit(Collider other)
         {
-            Debug.Log("Exit");
             List<SceneOwner> scenesToIgnore = new List<SceneOwner>();
             scenesToIgnore.Add(currentScene);
 
+            state = SceneState.Loaded;
+
             UnloadNeighbors(scenesToIgnore);
+
+            if (currentScene != this) { return; }
+            Unload();
         }
 
         public void UnloadNeighbors(List<SceneOwner> sceneOwnersToIgnore)

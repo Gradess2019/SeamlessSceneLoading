@@ -1,30 +1,35 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
+namespace SceneLoading
+{
 #if UNITY_EDITOR
-[CustomEditor(typeof(SceneOwner))]
-public class SceneOwnerEditor : Editor {
-    public override void OnInspectorGUI() {
-        base.OnInspectorGUI();
-        
-        SceneOwner sceneOwner = target as SceneOwner;
-
-        if (GUILayout.Button("AddToNeigbhors"))
+    [CustomEditor(typeof(SceneOwner))]
+    public class SceneOwnerEditor : Editor
+    {
+        public override void OnInspectorGUI()
         {
-            sceneOwner.AddToNeibgors();
-        }
+            base.OnInspectorGUI();
 
-        if (GUILayout.Button("SetAsFirst"))
-        {
-            SceneOwner[] scenesToReset = FindObjectsOfType<SceneOwner>();
-            foreach (SceneOwner scene in scenesToReset)
+            SceneOwner sceneOwner = target as SceneOwner;
+
+            if (GUILayout.Button("AddToNeigbhors"))
             {
-                scene.IsFirst = false;
+                sceneOwner.AddToNeibgors();
             }
-            SceneOwner.CurrentScene = sceneOwner;
-            sceneOwner.IsFirst = true;
-            sceneOwner.Load();
+
+            if (GUILayout.Button("SetAsFirst"))
+            {
+                SceneOwner[] scenesToReset = FindObjectsOfType<SceneOwner>();
+                foreach (SceneOwner scene in scenesToReset)
+                {
+                    scene.IsFirst = false;
+                }
+                SceneOwner.CurrentScene = sceneOwner;
+                sceneOwner.IsFirst = true;
+                sceneOwner.Load();
+            }
         }
     }
-}
 #endif
+}
